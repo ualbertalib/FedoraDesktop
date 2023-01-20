@@ -14,9 +14,6 @@
    dnf:
      pkg: fedora-workstation-repositories
 
- - name: enable the new repo named google-chrome
-   command:  dnf config-manager --set-enabled google-chrome    warn=false
-
    #    sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
    #    sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
  - name: Snag the version of Fedora you're using
