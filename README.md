@@ -20,21 +20,32 @@
     * backups: your ~/.vimrc/ (if you're a vim fan)
     * Engage brain!  What else is on that HD that you'll want right after you nuke it?
 
-## Pre-amble: How to START using the toolkit to build *YOUR* system
+## Step 1: Perform OS install
+
+* Use the Workstation-Live ISO
+* Perform fresh OS install & reboot (get the right time zone)
+* At "firstboot", 
+    * please set the root password (security!) & don't enable remote login by root
+    * enable the optional repositories 
+    * set up your personal account
+* Install all the latest patches with: `sudo dnf update -y` (or use the "software" GUI) and reboot
+
+## Step 2: Get a copy of the toolkit
 
 * On the freshly installed VM, logged in with your personal userid...
-* Install git; `dnf install git`
-* Clone this repo, I suggest: `mkdir ~/dev/; cd ~/dev; git clone ...; cd FedoraDesktop`
+* Install git; `sudo dnf install git`
+* Clone this repo, I suggest: `mkdir ~/dev/; cd ~/dev; git clone git@github.com/ualbertalib/FedoraDesktop.git; cd FedoraDesktop`  (It's public, you shouldn't need any keys)
 
-## Customize the toolkit!
+## Step 3: Personalize the toolkit
 
-* Add your SSH key files to roles/files/ 
-    * If this is your first time, generate a new keypair; copy them to ~/dev/DestopFedora/roles/desktop/files/
-    * (you must not commit them to this repo; you need a plan for keeping these backed up)
-    * 
-* Edit roles/desktop/files/authorized_keys/, adding the public key(s) you want to use for remotely logging into your desktop
-* roles/desktop/vars/main.yml is unencrypted, but this is the place where you should put your passwords, so it needs to be encrypted
+* Add your SSH key files into the tree
+    * If this is your first time, generate a new keypair; otherwise, copy existing files to this machine; if you generate new, consider how you'll back these up!
+    * `cp ~/.ssh/id* ~/dev/FedoraDesktop/roles/desktop/files/`   # Neil, this is redundant
+    * (you must not commit them to this repo; .gitignore is set up to ignore these files)
+* Edit roles/desktop/files/authorized_keys, adding the public key(s) you want to use for remotely logging into your desktop
+* roles/desktop/vars/main-template.yml is unencrypted, but we'll use it to create  a place where you should put your passwords
     * `cd roles/desktop/vars`
+    * `cp main-template.yml main.yml`
     * `ansible-vault encrypt main.yml`  --> it will prompt you twice for a password
     * `ansible-vault edit main.yml` --> it wants the password now.   Add your passwords!
     * It's worth saying: you must not commit these credentials!
@@ -43,18 +54,9 @@
     * You should edit "inventory" & make sure the canonical hostname of this VM is the only entry in the [desktop] group
     * Fill out the variables found there!  I'm not kidding !  This step is very important! (set your userid)
 
-## The main event - Steps to building and configuring your desktop
+## Step 4: The main event - Use scripts and Ansible to configure the desktop
 
-1. Perform fresh OS install & reboot (get the right time zone).
-2. At "firstboot", 
-    * please set the root password (security!) & don't enable remote login by root
-    * enable the optional repositories 
-    * set up your personal account
-3. Install all the latest patches with: `dnf update -y` (or use the "software" GUI)
-4. Use the prepNewDesktop4Ansible.sh script, directly on the fresh OS 
-5. review inventory file, "prod" 
-6. Run the playbook that will configure the machine, ready to be your desktop:
+* run the prepNewDesktop4Ansible.sh script, directly on the fresh OS 
+* Run the playbook that will configure the machine, ready to be your desktop:
 
-`ansible-playbook desktop.yml -i prod --ask-vault-pass --limit <u-pick-the-hostname>`
-
-
+`ansible-playbook desktop.yml -i inventory --ask-vault-pass `  # wants password for decryption
