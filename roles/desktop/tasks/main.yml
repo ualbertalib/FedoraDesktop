@@ -17,25 +17,29 @@
    #    sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
    #    sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
  - name: Snag the version of Fedora you're using
-   command: rpm -E %fedora    warn=false
+   command: rpm -E %fedora
    register: fedoraVersion
    
- - name: enable RPMFusion free repo, used for ffmpeg
-   dnf: 
-     pkg: https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm
+     #- name: Enable RPMFusion repos, needed for ffmpeg and more
+     #dnf: 
+     #pkg: [ 'https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm', 'https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm' ]
+     #state: installed
+    
+ - name: pull stuff
+   get_url: 
+     url: https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm
+     dest: /etc/yum.repos.d/
+     mode: 0660
 
- - name: enable RPMFusion non-free repo, used for ... other stuff
-   dnf: 
-     pkg: https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm
+ - name: pull stuff
+   get_url: 
+     url: https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm
+     dest: /etc/yum.repos.d/
+     mode: 0660
 
- # wget https://nagstamon.ifw-dresden.de/repo/fedora/nagstamon.repo --output-document=/etc/yum.repos.d/nagstamon.repo
- - name: 
-   copy: src=nagstamon.repo dest=/etc/yum.repos.d/ owner=root group=root mode=0600
-
-   # libselinux-yum, yum-protectbase ? Which one is installing python2?
- - name: Base software
+ - name: Install base software - this is slow
    dnf: 
-     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'ovirt-engine-cli', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'ffmpeg', 'ffmpeg-devel', 'perl-Test-Harness', 'nagstamon', 'cowsay', "python3-jmespath"] 
+     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'perl-Test-Harness', 'cowsay', 'python3-jmespath'] 
      state: installed
    tags: sw
 
@@ -79,7 +83,7 @@
  - name: Populate /etc/permissions.ccid
    template: src=permissions.ccid.j2 dest=/etc/permissions.ccid owner=root group=root mode=0600 backup=yes
 
- - name: Create directories used as  mountpoints for shared filesystems
+ - name: Create directories used as mountpoints for shared filesystems
    file: 
      path: "{{ item }}" 
      state: directory  
