@@ -1,0 +1,8 @@
+[user]
+	name = <your name here>
+	email = <your email here>
+[merge]
+	tool = gvimdiff
+	conflictstyle = diff3
+[mergetool]
+	prompt = false

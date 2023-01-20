@@ -1,0 +1,5 @@
+---
+# This is done so the system picks up the new VPN configuration.
+# This is  likely to cause a brief outage; not sure if it'll work out, or cause a problem
+ - name: restart NetworkManager
+   systemd: name=NetworkManager state=restarted

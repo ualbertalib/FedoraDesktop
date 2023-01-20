@@ -1,0 +1,4 @@
+---
+password: "<your-windows-password"
+ccid_pw: "<your-ccid-passwd>"
+ansible_decryption_passwd: "<the-ansible-decryption-password>"

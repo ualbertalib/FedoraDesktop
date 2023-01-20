@@ -1,0 +1,245 @@
+---
+
+ - name: Set up variables
+   set_fact: 
+     homedir: "/home/{{ userid }}"
+   tags: code-repos
+
+     # thanks, https://www.if-not-true-then-false.com/2010/install-google-chrome-with-yum-on-fedora-red-hat-rhel/
+ - name: install repo fedora-workstation-repositories, to get the repo for chrome
+   dnf:
+     pkg: fedora-workstation-repositories
+
+ - name: enable the new repo named google-chrome
+   command:  dnf config-manager --set-enabled google-chrome    warn=false
+
+   #    sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+   #    sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+ - name: Snag the version of Fedora you're using
+   command: rpm -E %fedora    warn=false
+   register: fedoraVersion
+   
+ - name: enable RPMFusion free repo, used for ffmpeg
+   dnf: 
+     pkg: https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm
+
+ - name: enable RPMFusion non-free repo, used for ... other stuff
+   dnf: 
+     pkg: https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm
+
+ # wget https://nagstamon.ifw-dresden.de/repo/fedora/nagstamon.repo --output-document=/etc/yum.repos.d/nagstamon.repo
+ - name: 
+   copy: src=nagstamon.repo dest=/etc/yum.repos.d/ owner=root group=root mode=0600
+
+   # libselinux-yum, yum-protectbase ? Which one is installing python2?
+ - name: Base software
+   dnf: 
+     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'ovirt-engine-cli', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'ffmpeg', 'ffmpeg-devel', 'perl-Test-Harness', 'nagstamon', 'cowsay', "python3-jmespath"] 
+     state: installed
+   tags: sw
+
+ - name: Install tlp and powertop, only on the laptop
+   dnf: 
+     pkg: ['tlp', 'powertop' ] 
+     state: installed
+   tags: sw
+   when: ansible_hostname == "laptop"
+
+ - name: Start and enable services
+   service: name={{ item }} state=started enabled=yes
+   with_items:
+     - fail2ban
+
+       #- name: Add a flatpak remote - flathub
+       #flatpak_remote: 
+       #name: flathub
+       #state: present
+       #flatpakrepo_url: https://flathub.org/repo/flathub.flatpakrepo
+       #
+       #- name: Install nagstamon via flatpak, eg from flathub
+       #flatpak: 
+       #name: de.ifw_dresden.nagstamon 
+
+ - name: Config for automatic updates via dnf-automatic
+   lineinfile:   
+     path: /etc/dnf/automatic.conf
+     backrefs: yes
+     regexp: '^apply_updates = no'
+     line: 'apply_updates = yes'
+     backup: yes
+   
+# This is a weird feature of systemctl: a timer.  Not a service. Kinda like a crontab, an event you can enable, disable.
+ - name: Config for automatic updates
+   systemd: name=dnf-automatic-install.timer enabled=yes
+ 
+ - name: Populate /etc/permissions
+   template: src=permissions.j2 dest=/etc/permissions owner=root group=root mode=0600 backup=yes
+
+ - name: Populate /etc/permissions.ccid
+   template: src=permissions.ccid.j2 dest=/etc/permissions.ccid owner=root group=root mode=0600 backup=yes
+
+ - name: Create directories used as  mountpoints for shared filesystems
+   file: 
+     path: "{{ item }}" 
+     state: directory  
+   with_items: 
+    - "/libroot/ITS_Share"
+    - "/libroot/ISO"
+    - "/libroot/UAL_all_staff"
+    - "/libroot/{{ userid }}"
+    - "/GPU"
+
+ - name: Set up fstab with MS shared filesystems
+   blockinfile: 
+    dest: /etc/fstab
+    #mode: 0664 
+    #owner: root
+    #group: root
+    backup: yes
+    block: |
+        # some removable media I'm using
+        /dev/mapper/secureKingston                      /media/secureKingston   vfat owner,noauto,umask=0 0 0   0 3
+        /dev/mapper/secureCF                            /mnt/secureCF           ext3 noauto                     0 3
+        # This was hard-won, see: man mount.cifs
+        //libroot.library.ualberta.ca/ITS_Share /libroot/ITS_Share      cifs    credentials=/etc/permissions,uid={{ userid }},gid={{ userid }},noauto 0 0
+        //libroot.library.ualberta.ca/ISO       /libroot/ISO            cifs    credentials=/etc/permissions,uid={{ userid }},gid={{ userid }},noauto 0 0
+        //libroot.library.ualberta.ca/UAL_all_staff /libroot/UAL_all_staff cifs credentials=/etc/permissions,uid={{ userid }},gid={{ userid }},noauto 0 0
+        //libroot.library.ualberta.ca/{{ userid }} /libroot/{{ userid }} cifs   credentials=/etc/permissions,uid={{ userid }},gid={{ userid }},noauto 0 0
+        #//libroot.library.ualberta.ca/Unix     /libroot/Unix           cifs    credentials=/etc/permissions,uid={{ userid }},gid={{ userid }},noauto 0 0
+        # This is the AFS/GPU space, mounted via Samba (can't compile OpenAFS here)
+        //samba.srv.ualberta.ca/{{ userid }}/               /GPU                    cifs    credentials=/etc/permissions.ccid,uid={{ userid }},gid={{ userid }},noauto 0 0
+
+ - name: Set up VPN
+   template: src=UAL dest=/etc/NetworkManager/system-connections/ owner=root group=root mode=0600 backup=yes
+   notify: restart NetworkManager
+
+   # ansible-caching-into-redis only works if your desktop has access to the redis port through Ray's firewall (doesn't work on my laptop or 'secondary')
+ - name: Use pip to install redis module
+   pip: name=redis 
+   when: inventory_hostname=="its004nm2"
+
+   # required for ansible-config/projects/vmware_builder/
+ - name: Use pip to install pyvmomi module
+   pip: name=pyvmomi 
+
+#####  Setting up my personal userid - some steps using "become: no" ######## ########################################################
+
+ - name: SSH keys
+   copy: src={{ item }} dest="{{ homedir }}/.ssh/" mode=0600 owner={{ userid }} group={{ userid }} backup=yes
+   with_items:
+    - id_rsa
+    - id_rsa.pub
+    - AWSPrimary.pem
+    - id_ecdsa
+    - id_ecdsa.pub
+    - "id_rsa.aws.{{ userid }}"
+
+   # Commandline history configuration ... some of these steps should be for both root, and your personal userid
+   # Stolen from shared-roles/history
+ - name: Set up configuration for history command
+   blockinfile:
+    dest: "{{ homedir}}/.bashrc"
+    mode: 0600 
+    owner: "{{ userid }}"
+    group: "{{ userid }}"
+    backup: yes
+    block: |
+     # commandline history settings - how many previous commands will be loaded into memory?
+     HISTSIZE=20000
+     # How many previous commands will be stored in history?
+     HISTFILESIZE=20000
+     # each shell will append to the history file
+     shopt -s histappend
+     # Record the time that the command was issued
+     HISTTIMEFORMAT='%F %T '
+     # Aliases
+     alias ssh='ssh -A -X'
+     alias cp='cp -i'
+     alias rm='rm -i'
+
+ - name: Create a directory to hold git repos, personal userid
+   file: path="{{ homedir }}/dev" state=directory
+   become: no
+  
+ - name: Fix /etc/resolv.conf
+   copy: src=resolv.conf dest="/etc/resolv.conf" mode=0644 owner=root group=root backup=yes
+
+ - name: Yank the SSH key from 'code' into our local keystore
+   #shell: ssh-keyscan code > {{ homedir }}/.ssh/known_hosts     creates="{{ homedir }}/.ssh/known_hosts"
+   shell: ssh-keyscan code >> {{ homedir }}/.ssh/known_hosts
+   become: no
+
+ - name: Ensure known_hosts has the correct mode, or it won't work
+   file: path={{ homedir }}/.ssh/known_hosts mode=0600
+   become: no
+
+   # Maybe square this list, with the list on Winston's drive... integrate!
+   #- name: Download a list of git repos, specific to personal userid
+   #git: 
+   #repo: "root@code:/var/lib/git/{{ item }}.git"  
+   #dest: "{{ homedir }}/dev/{{ item }}"
+   #with_items: 
+   #- ansible
+   #- ansible-config
+   #- ansible-dev
+   #- vm_generate
+   #- unixadmin_pubkeys
+   #become: no
+   #tags: code-repos
+
+ - name: Template out .ansible.cfg, with redis, only on primary machine
+   template: src=ansible.cfg.j2 dest="{{ homedir }}/.ansible.cfg"  backup=yes
+   become: no
+   when: inventory_hostname=="its004nm2"
+
+ - name: Template out .ansible.cfg, without redis
+   template: src=ansible.cfg.noredis.j2 dest="{{ homedir }}/.ansible.cfg"  backup=yes
+   become: no
+   when: inventory_hostname!="its004nm2"
+
+ - name: Template out ansible.passwd
+   template: src=ansible.password.j2 dest="{{ homedir }}/ansible.passwd"  mode=0600
+   become: no
+
+ - name: Copy .gitconfig
+   copy: src=.gitconfig dest="{{ homedir }}/.gitconfig" mode=0640 owner={{ userid }} group={{ userid }} backup=yes
+
+
+   # to do:
+   # 1. /etc/resolv.conf isn't going to stay that way, on <secondary>.  Attempt to configure dhcpd, so it never updates this file? 
+   # That probably only only means something on <secondary>, since <primary> will get a static IP address
+   #
+   # 2. on <primary>, configure the primary NIC with appropriate static address?
+   #
+   # Notes:
+   # If you're switching hardware, ask Rebecca to cancel the DHCP reservation for the old MAC in the old machine (or, face a conflict, when somebody tries to boot your old one!
+   #
+# Apache jmeter: 
+# OK, this is probably gonna break.  It seems the default Fedora profile is installing "java-1.8.0-openjdk-headless", which is insufficient for jmeter
+ - name: Install OpenJDK, for jmeter
+   dnf: 
+     pkg: ['java-1.8.0-openjdk']
+     state: installed
+
+ # See: https://jmeter.apache.org/download_jmeter.cgi
+ # There's no solid link to the latest version.
+ # They use mirror sites, obfuscating.
+ # I think we're stuck with a manual install ... ? 
+ # cd ~
+ # pushd /tmp/
+ #      wget http://apache.mirror.gtcomm.net//jmeter/binaries/apache-jmeter-5.2.1.tgz   # but that version number will change over time
+ #      wget https://www.apache.org/dist/jmeter/binaries/apache-jmeter-5.2.1.tgz.sha512
+ #      ssha512sum --check apache-jmeter-5.2.1.tgz.sha512 ha512sum 
+ #      (read results)
+ # popd
+ # mkdir bin
+ # pushd bin
+ #      tar xzf /tmp/apache-jmeter-5.2.1.tgz
+ # popd
+ #
+ # Further manual steps: edit ~/.bashrc & 
+ #   a) append ~/bin/apache-jmeter-5.2.1/bin to $PATH
+ #   b) Set $JAVA_HOME to something like: 
+ #        export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.232.b09-0.fc31.x86_64/jre
+ 
+

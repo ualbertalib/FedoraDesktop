@@ -1,0 +1,11 @@
+---
+
+# Did you read the README?
+  - name: Set up Fedora desktop and laptop
+    hosts: desktop
+    gather_facts: yes
+    become: yes
+    become_user: root
+    roles:
+     - desktop
+
