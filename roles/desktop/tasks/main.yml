@@ -5,6 +5,10 @@
      homedir: "/home/{{ userid }}"
    tags: code-repos
 
+# Help out developers by getting this file in early
+ - name: Populate .gitconfig
+   template: src=gitconfig dest="{{ homedir }}/.gitconfig" mode=0640 owner={{ userid }} group={{ userid }} backup=yes
+
      # thanks, https://www.if-not-true-then-false.com/2010/install-google-chrome-with-yum-on-fedora-red-hat-rhel/
  - name: install repo fedora-workstation-repositories, to get the repo for chrome
    dnf:
@@ -200,9 +204,6 @@
  - name: Template out ansible.passwd
    template: src=ansible.password.j2 dest="{{ homedir }}/ansible.passwd"  mode=0600
    become: no
-
- - name: Copy .gitconfig
-   copy: src=.gitconfig dest="{{ homedir }}/.gitconfig" mode=0640 owner={{ userid }} group={{ userid }} backup=yes
 
 
    # to do:

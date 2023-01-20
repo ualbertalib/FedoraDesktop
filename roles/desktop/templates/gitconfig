@@ -1,6 +1,6 @@
 [user]
-	name = <your name here>
-	email = <your email here>
+	name = {{ FullName }}
+	email = {{ email }}
 [merge]
 	tool = gvimdiff
 	conflictstyle = diff3

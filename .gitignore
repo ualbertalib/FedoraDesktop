@@ -1,0 +1,3 @@
+inventory
+roles/desktop/files/id_*
+roles/desktop/vars/main.yml

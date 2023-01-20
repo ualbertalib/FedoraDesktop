@@ -21,9 +21,9 @@ echo "Setting up authorized_keys"
 cp roles/desktop/files/authorized_keys ~/.ssh/ 
 chmod 0600 ~/.ssh/authorized_keys
 
-echo "Installing ssh credentials"
-cp roles/desktop/files/id* ~/.ssh/
-chmod 0600 ~/.ssh/id*
+#echo "Installing ssh credentials"
+#cp roles/desktop/files/id* ~/.ssh/
+#chmod 0600 ~/.ssh/id*
 
 echo "Accepting the ssh key from localhost" 
 if ! [ -e ~/.ssh/known_hosts ]; then

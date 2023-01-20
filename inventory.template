@@ -1,2 +1,2 @@
 [desktop]
-localhost   userid="Please add your unix userid"  # might work 
+localhost   userid="<your-userid>  email="<your-email>" FullName="<your-full-name>"
