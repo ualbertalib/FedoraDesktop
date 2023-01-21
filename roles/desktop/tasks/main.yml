@@ -186,4 +186,6 @@
    become: no
    when: inventory_hostname!="its004nm2"
 
+ - name: Ensure known_hosts has the correct mode, or it won't work
+   copy: src=UAL.conf dest=/etc/systemd/resolved.conf.d/UAL.conf mode=0600
 
