@@ -24,22 +24,15 @@
      #dnf: 
      #pkg: [ 'https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm', 'https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm' ]
      #state: installed
-    
- - name: Install RPMFusion Free repo
-   get_url: 
-     url: https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm
-     dest: /etc/yum.repos.d/
-     mode: 0660
-
- - name: Install RPMFusion Non-Free repo
-   get_url: 
-     url: https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm
-     dest: /etc/yum.repos.d/
-     mode: 0660
+ 
+ - name: Install RPMFusion repos, used for ffmpeg
+   dnf:
+     pkg: [ "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm", "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm"]
+     disable_gpg_check: true
 
  - name: Install base software - this is slow
    dnf: 
-     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'perl-Test-Harness', 'cowsay', 'python3-pip', 'python3-jmespath'] 
+     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'perl-Test-Harness', 'cowsay', 'python3-pip', 'python3-jmespath', 'ffmpeg', 'ffmpeg-devel' ] 
      state: installed
    tags: sw
 
