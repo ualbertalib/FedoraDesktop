@@ -25,13 +25,13 @@
      #pkg: [ 'https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm', 'https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm' ]
      #state: installed
     
- - name: pull stuff
+ - name: Install RPMFusion Free repo
    get_url: 
      url: https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm
      dest: /etc/yum.repos.d/
      mode: 0660
 
- - name: pull stuff
+ - name: Install RPMFusion Non-Free repo
    get_url: 
      url: https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm
      dest: /etc/yum.repos.d/
@@ -115,7 +115,7 @@
         //samba.srv.ualberta.ca/{{ userid }}/               /GPU                    cifs    credentials=/etc/permissions.ccid,uid={{ userid }},gid={{ userid }},noauto 0 0
 
  - name: Set up VPN
-   template: src=UAL dest=/etc/NetworkManager/system-connections/ owner=root group=root mode=0600 backup=yes
+   template: src=UAL.j2 dest=/etc/NetworkManager/system-connections/UAL owner=root group=root mode=0600 backup=yes
    notify: restart NetworkManager
 
    # ansible-caching-into-redis only works if your desktop has access to the redis port through Ray's firewall (doesn't work on my laptop or 'secondary')
