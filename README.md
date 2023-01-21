@@ -34,7 +34,7 @@
 
 * On the freshly installed VM, logged in with your personal userid...
 * Install git; `sudo dnf install git`
-* Clone this repo, I suggest: `mkdir ~/dev/; cd ~/dev; git clone git@github.com/ualbertalib/FedoraDesktop.git; cd FedoraDesktop`  (It's public, you shouldn't need any keys)
+* Clone this repo, I suggest: `mkdir ~/dev/; cd ~/dev; git clone https://github.com/ualbertalib/FedoraDesktop.git; cd FedoraDesktop`  (It's public, you shouldn't need any keys)
 
 ## Step 3: Personalize the toolkit
 
