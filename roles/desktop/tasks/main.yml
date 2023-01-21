@@ -119,15 +119,16 @@
 
 #####  Setting up my personal userid - some steps using "become: no" ######## ########################################################
 
- - name: SSH keys
-   copy: src={{ item }} dest="{{ homedir }}/.ssh/" mode=0600 owner={{ userid }} group={{ userid }} backup=yes
-   with_items:
-    - id_rsa
-    - id_rsa.pub
-    - AWSPrimary.pem
-    - id_ecdsa
-    - id_ecdsa.pub
-    - "id_rsa.aws.{{ userid }}"
+# This needs to be fed a list of files in the directory
+     # - name: SSH keys
+     #   copy: src={{ item }} dest="{{ homedir }}/.ssh/" mode=0600 owner={{ userid }} group={{ userid }} backup=yes
+     #   with_items:
+     #- id_rsa
+     #    - id_rsa.pub
+     #    - AWSPrimary.pem
+     #    - id_ecdsa
+     #    - id_ecdsa.pub
+     #    - "id_rsa.aws.{{ userid }}"
 
    # Commandline history configuration ... some of these steps should be for both root, and your personal userid
    # Stolen from shared-roles/history
