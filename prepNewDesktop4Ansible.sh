@@ -7,7 +7,7 @@ set -e
 clear
 echo "UNCOMMENT THE LINE ALLOWING 'wheel' group password-less access"
 read -p "Hit enter when ready:"
-sudo visudo
+sudo EDITOR=/usr/bin/vi visudo
 
 echo "Installing ansible"
 sudo dnf install ansible -y
