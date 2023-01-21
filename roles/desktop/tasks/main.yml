@@ -39,7 +39,7 @@
 
  - name: Install base software - this is slow
    dnf: 
-     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'perl-Test-Harness', 'cowsay', 'python3-jmespath'] 
+     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'perl-Test-Harness', 'cowsay', 'python3-pip', 'python3-jmespath'] 
      state: installed
    tags: sw
 
@@ -54,16 +54,6 @@
    service: name={{ item }} state=started enabled=yes
    with_items:
      - fail2ban
-
-       #- name: Add a flatpak remote - flathub
-       #flatpak_remote: 
-       #name: flathub
-       #state: present
-       #flatpakrepo_url: https://flathub.org/repo/flathub.flatpakrepo
-       #
-       #- name: Install nagstamon via flatpak, eg from flathub
-       #flatpak: 
-       #name: de.ifw_dresden.nagstamon 
 
  - name: Config for automatic updates via dnf-automatic
    lineinfile:   
