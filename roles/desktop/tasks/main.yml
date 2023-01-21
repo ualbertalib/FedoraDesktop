@@ -157,13 +157,13 @@
    file: path="{{ homedir }}/dev" state=directory
    become: no
   
- - name: Fix /etc/resolv.conf
-   copy: src=resolv.conf dest="/etc/resolv.conf" mode=0644 owner=root group=root backup=yes
+     # - name: Fix /etc/resolv.conf
+     #   copy: src=resolv.conf dest="/etc/resolv.conf" mode=0644 owner=root group=root backup=yes
 
- - name: Yank the SSH key from 'code' into our local keystore
+     # - name: Yank the SSH key from 'code' into our local keystore
    #shell: ssh-keyscan code > {{ homedir }}/.ssh/known_hosts     creates="{{ homedir }}/.ssh/known_hosts"
-   shell: ssh-keyscan code >> {{ homedir }}/.ssh/known_hosts
-   become: no
+   #shell: ssh-keyscan code >> {{ homedir }}/.ssh/known_hosts
+   #become: no
 
  - name: Ensure known_hosts has the correct mode, or it won't work
    file: path={{ homedir }}/.ssh/known_hosts mode=0600
@@ -193,46 +193,4 @@
    become: no
    when: inventory_hostname!="its004nm2"
 
- - name: Template out ansible.passwd
-   template: src=ansible.password.j2 dest="{{ homedir }}/ansible.passwd"  mode=0600
-   become: no
-
-
-   # to do:
-   # 1. /etc/resolv.conf isn't going to stay that way, on <secondary>.  Attempt to configure dhcpd, so it never updates this file? 
-   # That probably only only means something on <secondary>, since <primary> will get a static IP address
-   #
-   # 2. on <primary>, configure the primary NIC with appropriate static address?
-   #
-   # Notes:
-   # If you're switching hardware, ask Rebecca to cancel the DHCP reservation for the old MAC in the old machine (or, face a conflict, when somebody tries to boot your old one!
-   #
-# Apache jmeter: 
-# OK, this is probably gonna break.  It seems the default Fedora profile is installing "java-1.8.0-openjdk-headless", which is insufficient for jmeter
- - name: Install OpenJDK, for jmeter
-   dnf: 
-     pkg: ['java-1.8.0-openjdk']
-     state: installed
-
- # See: https://jmeter.apache.org/download_jmeter.cgi
- # There's no solid link to the latest version.
- # They use mirror sites, obfuscating.
- # I think we're stuck with a manual install ... ? 
- # cd ~
- # pushd /tmp/
- #      wget http://apache.mirror.gtcomm.net//jmeter/binaries/apache-jmeter-5.2.1.tgz   # but that version number will change over time
- #      wget https://www.apache.org/dist/jmeter/binaries/apache-jmeter-5.2.1.tgz.sha512
- #      ssha512sum --check apache-jmeter-5.2.1.tgz.sha512 ha512sum 
- #      (read results)
- # popd
- # mkdir bin
- # pushd bin
- #      tar xzf /tmp/apache-jmeter-5.2.1.tgz
- # popd
- #
- # Further manual steps: edit ~/.bashrc & 
- #   a) append ~/bin/apache-jmeter-5.2.1/bin to $PATH
- #   b) Set $JAVA_HOME to something like: 
- #        export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.232.b09-0.fc31.x86_64/jre
- 
 
