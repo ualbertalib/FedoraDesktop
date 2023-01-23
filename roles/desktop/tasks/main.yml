@@ -186,6 +186,14 @@
    become: no
    when: inventory_hostname!="its004nm2"
 
- - name: Ensure known_hosts has the correct mode, or it won't work
-   copy: src=UAL.conf dest=/etc/systemd/resolved.conf.d/UAL.conf mode=0600
+ - name: Create dir /etc/systemd/resolved.conf.d/, for custom DNS config
+   file: 
+     path: /etc/systemd/resolved.conf.d
+     state: directory  
+     owner: root
+     group: root
+     mode: 0755
+ 
+ - name: Populate /etc/systemd/resolved.conf.d/UAL.conf, custom DNS config
+   copy: src=UAL.conf dest=/etc/systemd/resolved.conf.d/ mode=0600
 
