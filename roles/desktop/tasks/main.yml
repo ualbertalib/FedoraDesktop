@@ -38,7 +38,7 @@
    # libselinux-yum, yum-protectbase ? Which one is installing python2?
  - name: Base software
    dnf: 
-     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'ovirt-engine-cli', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'ffmpeg', 'ffmpeg-devel', 'perl-Test-Harness', 'nagstamon', 'cowsay', "python3-jmespath"] 
+     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'ovirt-engine-cli', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'ffmpeg', 'ffmpeg-devel', 'perl-Test-Harness', 'nagstamon', 'cowsay', 'python3-jmespath', 'git-lfs', 'pwgen'] 
      state: installed
    tags: sw
 
