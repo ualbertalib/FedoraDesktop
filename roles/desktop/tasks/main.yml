@@ -14,20 +14,23 @@
    dnf:
      pkg: fedora-workstation-repositories
 
- - name: enable the new repo named google-chrome
-   command:  dnf config-manager --set-enabled google-chrome    warn=false
-
    #    sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
    #    sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
  - name: Snag the version of Fedora you're using
-   command: rpm -E %fedora    warn=false
+   command: rpm -E %fedora
    register: fedoraVersion
    
- - name: enable RPMFusion free repo, used for ffmpeg
-   dnf: 
-     pkg: https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm
+     #- name: Enable RPMFusion repos, needed for ffmpeg and more
+     #dnf: 
+     #pkg: [ 'https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm', 'https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm' ]
+     #state: installed
+ 
+ - name: Install RPMFusion repos, used for ffmpeg
+   dnf:
+     pkg: [ "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ fedoraVersion.stdout }}.noarch.rpm", "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm"]
+     disable_gpg_check: true
 
- - name: enable RPMFusion non-free repo, used for ... other stuff
+ - name: Install base software - this is slow
    dnf: 
      pkg: https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ fedoraVersion.stdout }}.noarch.rpm
 
@@ -38,7 +41,7 @@
    # libselinux-yum, yum-protectbase ? Which one is installing python2?
  - name: Base software
    dnf: 
-     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'ovirt-engine-cli', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'ffmpeg', 'ffmpeg-devel', 'perl-Test-Harness', 'nagstamon', 'cowsay', 'python3-jmespath', 'git-lfs', 'pwgen'] 
+     pkg: ['gnome-tweaks', 'vim-enhanced', 'vim-X11', 'telnet', 'firewalld', 'fail2ban', 'fedora-workstation-repositories', 'ansible', 'seamonkey', 'gpodder', '@Development Tools', 'dnf-automatic', 'dnf-plugins-extras-tracer', 'google-chrome-stable', 'wine', 'system-config-printer', 'vim-syntastic-ansible', 'virt-viewer', 'htop', '@virtualization', 'dia', 'shutter', 'flatpak', 'snapd', 'git', 'mercurial', 'mono-devel', 'perl-Test-Harness', 'cowsay', 'python3-pip', 'python3-jmespath', 'ffmpeg', 'ffmpeg-devel', 'git-lfs', 'pwgen' ] 
      state: installed
    tags: sw
 
@@ -53,16 +56,6 @@
    service: name={{ item }} state=started enabled=yes
    with_items:
      - fail2ban
-
-       #- name: Add a flatpak remote - flathub
-       #flatpak_remote: 
-       #name: flathub
-       #state: present
-       #flatpakrepo_url: https://flathub.org/repo/flathub.flatpakrepo
-       #
-       #- name: Install nagstamon via flatpak, eg from flathub
-       #flatpak: 
-       #name: de.ifw_dresden.nagstamon 
 
  - name: Config for automatic updates via dnf-automatic
    lineinfile:   
@@ -82,7 +75,7 @@
  - name: Populate /etc/permissions.ccid
    template: src=permissions.ccid.j2 dest=/etc/permissions.ccid owner=root group=root mode=0600 backup=yes
 
- - name: Create directories used as  mountpoints for shared filesystems
+ - name: Create directories used as mountpoints for shared filesystems
    file: 
      path: "{{ item }}" 
      state: directory  
@@ -114,7 +107,7 @@
         //samba.srv.ualberta.ca/{{ userid }}/               /GPU                    cifs    credentials=/etc/permissions.ccid,uid={{ userid }},gid={{ userid }},noauto 0 0
 
  - name: Set up VPN
-   template: src=UAL dest=/etc/NetworkManager/system-connections/ owner=root group=root mode=0600 backup=yes
+   template: src=UAL.j2 dest=/etc/NetworkManager/system-connections/UAL owner=root group=root mode=0600 backup=yes
    notify: restart NetworkManager
 
    # ansible-caching-into-redis only works if your desktop has access to the redis port through Ray's firewall (doesn't work on my laptop or 'secondary')
@@ -128,15 +121,16 @@
 
 #####  Setting up my personal userid - some steps using "become: no" ######## ########################################################
 
- - name: SSH keys
-   copy: src={{ item }} dest="{{ homedir }}/.ssh/" mode=0600 owner={{ userid }} group={{ userid }} backup=yes
-   with_items:
-    - id_rsa
-    - id_rsa.pub
-    - AWSPrimary.pem
-    - id_ecdsa
-    - id_ecdsa.pub
-    - "id_rsa.aws.{{ userid }}"
+# This needs to be fed a list of files in the directory
+     # - name: SSH keys
+     #   copy: src={{ item }} dest="{{ homedir }}/.ssh/" mode=0600 owner={{ userid }} group={{ userid }} backup=yes
+     #   with_items:
+     #- id_rsa
+     #    - id_rsa.pub
+     #    - AWSPrimary.pem
+     #    - id_ecdsa
+     #    - id_ecdsa.pub
+     #    - "id_rsa.aws.{{ userid }}"
 
    # Commandline history configuration ... some of these steps should be for both root, and your personal userid
    # Stolen from shared-roles/history
@@ -165,13 +159,13 @@
    file: path="{{ homedir }}/dev" state=directory
    become: no
   
- - name: Fix /etc/resolv.conf
-   copy: src=resolv.conf dest="/etc/resolv.conf" mode=0644 owner=root group=root backup=yes
+     # - name: Fix /etc/resolv.conf
+     #   copy: src=resolv.conf dest="/etc/resolv.conf" mode=0644 owner=root group=root backup=yes
 
- - name: Yank the SSH key from 'code' into our local keystore
+     # - name: Yank the SSH key from 'code' into our local keystore
    #shell: ssh-keyscan code > {{ homedir }}/.ssh/known_hosts     creates="{{ homedir }}/.ssh/known_hosts"
-   shell: ssh-keyscan code >> {{ homedir }}/.ssh/known_hosts
-   become: no
+   #shell: ssh-keyscan code >> {{ homedir }}/.ssh/known_hosts
+   #become: no
 
  - name: Ensure known_hosts has the correct mode, or it won't work
    file: path={{ homedir }}/.ssh/known_hosts mode=0600
@@ -201,46 +195,14 @@
    become: no
    when: inventory_hostname!="its004nm2"
 
- - name: Template out ansible.passwd
-   template: src=ansible.password.j2 dest="{{ homedir }}/ansible.passwd"  mode=0600
-   become: no
-
-
-   # to do:
-   # 1. /etc/resolv.conf isn't going to stay that way, on <secondary>.  Attempt to configure dhcpd, so it never updates this file? 
-   # That probably only only means something on <secondary>, since <primary> will get a static IP address
-   #
-   # 2. on <primary>, configure the primary NIC with appropriate static address?
-   #
-   # Notes:
-   # If you're switching hardware, ask Rebecca to cancel the DHCP reservation for the old MAC in the old machine (or, face a conflict, when somebody tries to boot your old one!
-   #
-# Apache jmeter: 
-# OK, this is probably gonna break.  It seems the default Fedora profile is installing "java-1.8.0-openjdk-headless", which is insufficient for jmeter
- - name: Install OpenJDK, for jmeter
-   dnf: 
-     pkg: ['java-1.8.0-openjdk']
-     state: installed
-
- # See: https://jmeter.apache.org/download_jmeter.cgi
- # There's no solid link to the latest version.
- # They use mirror sites, obfuscating.
- # I think we're stuck with a manual install ... ? 
- # cd ~
- # pushd /tmp/
- #      wget http://apache.mirror.gtcomm.net//jmeter/binaries/apache-jmeter-5.2.1.tgz   # but that version number will change over time
- #      wget https://www.apache.org/dist/jmeter/binaries/apache-jmeter-5.2.1.tgz.sha512
- #      ssha512sum --check apache-jmeter-5.2.1.tgz.sha512 ha512sum 
- #      (read results)
- # popd
- # mkdir bin
- # pushd bin
- #      tar xzf /tmp/apache-jmeter-5.2.1.tgz
- # popd
- #
- # Further manual steps: edit ~/.bashrc & 
- #   a) append ~/bin/apache-jmeter-5.2.1/bin to $PATH
- #   b) Set $JAVA_HOME to something like: 
- #        export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.232.b09-0.fc31.x86_64/jre
+ - name: Create dir /etc/systemd/resolved.conf.d/, for custom DNS config
+   file: 
+     path: /etc/systemd/resolved.conf.d
+     state: directory  
+     owner: root
+     group: root
+     mode: 0755
  
+ - name: Populate /etc/systemd/resolved.conf.d/UAL.conf, custom DNS config
+   copy: src=UAL.conf dest=/etc/systemd/resolved.conf.d/ mode=0664
 
